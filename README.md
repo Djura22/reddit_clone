@@ -2,7 +2,8 @@
 
 ### Mikro-Orm
 
-CLI
+CLI    
+
 npx mikro-orm migration:create   # Create new migration with current schema diff    
 
 npx mikro-orm migration:up       # Migrate up to the latest version    
