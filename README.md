@@ -31,4 +31,12 @@ npx mikro-orm migration:down     # Migrate one step down
 
 npx mikro-orm migration:list     # List all executed migrations    
 
-npx mikro-orm migration:pending  # List all pending migrations    
+npx mikro-orm migration:pending  # List all pending migrations
+
+### Redis DB
+
+Using Redis DB to store User session due to speed
+If using Windows, subsystem for Linux required, installation instructions for Redis here -
+https://auth0.com/blog/introduction-to-redis-install-cli-commands-and-data-types/
+
+To run server - redis-server

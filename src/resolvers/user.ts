@@ -2,6 +2,7 @@ import { User } from "../entities/User";
 import { MyContext } from "../types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
 import argon2 from 'argon2';
+import { Query } from "type-graphql";
 
 
 @InputType()
@@ -31,12 +32,25 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-  
+
+  @Query(() => User, { nullable: true })
+  async me(
+    @Ctx() { req, em }: MyContext) {
+    // you are not logged in
+    if (!req.session.userId) {
+      return null
+    }
+
+    const user = await em.findOne(User, { id: req.session.userId });
+    return user;
+  }
+  // User registration
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
     @Ctx() { em }: MyContext
   ): Promise<UserResponse> {
+    // Username length too small
     if (options.username.length <= 2) {
       return {
         errors: [
@@ -47,7 +61,7 @@ export class UserResolver {
         ],
       };
     }
-
+    // Password length too small
     if (options.password.length <= 3) {
       return {
         errors: [
@@ -67,7 +81,7 @@ export class UserResolver {
     try {
       await em.persistAndFlush(user);
     } catch(err) {
-      // duplicate username error
+      // Duplicate username error
       if (err.detail.includes("already exists")) {
         return {
           errors: [
@@ -85,9 +99,10 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async login(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username });
+    // Username does not exist
     if (!user) {
       return {
         errors: [
@@ -99,6 +114,7 @@ export class UserResolver {
       };
     }
     const valid = await argon2.verify(user.password, options.password);
+    // Password is incorrect
     if (!valid) {
       return {
         errors: [
@@ -110,8 +126,8 @@ export class UserResolver {
       };
     }
 
-    return {
-      user,
-    };
+    req.session.userId = user.id;
+
+    return { user };
   }  
 }
